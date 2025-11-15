@@ -15,8 +15,8 @@ video = open_video(video_path)
 
 
 content_detector = ContentDetector(
-    threshold=25.0,
-    min_scene_len=120,
+    threshold=20.0,
+    min_scene_len=30,
     luma_only=False,
     kernel_size=None
 )

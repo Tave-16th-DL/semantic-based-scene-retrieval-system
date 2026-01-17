@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>의미 기반 영화 장면 검색 시스템</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <main class="main">
+      <section class="player">
+        <video id="player" src="/media/parasite_1080_web.mp4" controls preload="metadata" playsinline></video>
+      </section>
+
+      <section class="searchbar">
+        <input id="q" type="text" placeholder="사용자가 찾고싶은 장면을 입력하세요." />
+        <button id="btn">검색</button>
+      </section>
+    </main>
+
+    <aside class="side">
+      <div class="sideHeader">
+        <div class="sideTitle">Top-K 타임라인</div>
+        <div id="status" class="status">원하는 장면을 입력하고 검색하세요.</div>
+      </div>
+      <div id="results" class="results"></div>
+    </aside>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

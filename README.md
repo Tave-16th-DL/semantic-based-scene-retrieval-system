@@ -1,1 +1,1 @@
-# semantic-based-scene-retrieval-archive-system
+# semantic-based-scene-retrieval-system

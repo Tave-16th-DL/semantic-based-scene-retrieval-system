@@ -6,6 +6,11 @@ const btnEl = document.getElementById("btn");
 
 let activeIdx = -1;
 
+// 검색 요청 겹침 방지용
+let reqSeq = 0;
+let controller = null;
+let isSearching = false;
+
 function setStatus(msg) {
   statusEl.textContent = msg;
 }
@@ -21,31 +26,65 @@ function setActive(i) {
   activeIdx = i;
 }
 
-function toggleExpanded(itemEl) {
-  itemEl.classList.toggle("expanded");
+function setLoading(on) {
+  isSearching = on;
+  btnEl.disabled = on;
+  btnEl.textContent = on ? "검색중..." : "검색";
+}
+
+function dedupeResults(results) {
+  // shot_id가 있으면 그걸로, 없으면 start_sec로 중복 제거
+  const seen = new Set();
+  const out = [];
+  for (const r of results) {
+    const key =
+      (r.shot_id != null ? `sid:${r.shot_id}` : null) ??
+      (r.start_sec != null ? `t:${r.start_sec}` : null) ??
+      `rank:${r.rank}-score:${r.score}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(r);
+  }
+  return out;
 }
 
 async function search() {
   const q = (qEl.value || "").trim();
   if (!q) return;
 
+  // 이미 검색중이면, 이전 요청을 취소하고 새 요청으로 교체
+  if (controller) controller.abort();
+  controller = new AbortController();
+
+  const mySeq = ++reqSeq;
+
+  setLoading(true);
   setStatus("검색 중...");
-  clearResults();
 
   try {
     const res = await fetch("/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: q, top_k: 5 }),
+      signal: controller.signal,
     });
 
+    if (mySeq !== reqSeq) return;
+
     if (!res.ok) {
+      clearResults();
       setStatus(`서버 오류: ${res.status}`);
       return;
     }
 
     const data = await res.json();
-    const results = data.results || [];
+
+    if (mySeq !== reqSeq) return;
+
+    let results = data.results || [];
+    results = dedupeResults(results);
+
+    clearResults();
 
     if (results.length === 0) {
       setStatus("검색 결과가 없습니다.");
@@ -64,7 +103,6 @@ async function search() {
             <span class="rank">#${r.rank}</span>
             <span class="time">${r.start_time}</span>
           </div>
-
           <div class="right">
             <span class="score">score ${Number(r.score).toFixed(4)}</span>
             <button class="toggleBtn" type="button" aria-label="설명 펼치기/접기" title="설명 펼치기/접기">
@@ -72,11 +110,13 @@ async function search() {
             </button>
           </div>
         </div>
-
-        <div class="title">${r.title || ""}</div>
+        <div class="title"></div>
       `;
 
-      // 아이템(박스) 클릭: 이동 + 재생
+      // title 안전 주입
+      item.querySelector(".title").textContent = r.title || "";
+
+      // 박스 클릭: 이동 + 재생
       item.addEventListener("click", () => {
         setActive(idx);
         if (typeof player.fastSeek === "function") player.fastSeek(r.start_sec);
@@ -84,24 +124,35 @@ async function search() {
         player.play();
       });
 
-      // 세모 버튼 클릭: 설명 토글만 (이동/재생 이벤트 막기)
+      // 세모 클릭: 토글만 (이동/재생 이벤트 막기)
       const toggleBtn = item.querySelector(".toggleBtn");
       toggleBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleExpanded(item);
+        item.classList.toggle("expanded");
       });
 
       resultsEl.appendChild(item);
     });
-
   } catch (e) {
+    if (e.name === "AbortError") {
+      // 이전 요청 취소는 정상 동작
+      return;
+    }
     console.error(e);
+    clearResults();
     setStatus("네트워크/클라이언트 오류가 발생했습니다.");
+  } finally {
+    // 최신 요청일 때만 로딩 해제
+    if (mySeq === reqSeq) setLoading(false);
   }
 }
 
-btnEl.addEventListener("click", search);
+btnEl.addEventListener("click", () => {
+  // 더블클릭 방지
+  if (!isSearching) search();
+});
+
 qEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") search();
+  if (e.key === "Enter" && !isSearching) search();
 });

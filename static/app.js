@@ -21,6 +21,10 @@ function setActive(i) {
   activeIdx = i;
 }
 
+function toggleExpanded(itemEl) {
+  itemEl.classList.toggle("expanded");
+}
+
 async function search() {
   const q = (qEl.value || "").trim();
   if (!q) return;
@@ -48,32 +52,47 @@ async function search() {
       return;
     }
 
-    setStatus(`결과 ${results.length}개 (클릭하면 해당 시작 시간으로 이동)`);
+    setStatus(`결과 ${results.length}개`);
 
     results.forEach((r, idx) => {
-      const div = document.createElement("div");
-      div.className = "item";
+      const item = document.createElement("div");
+      item.className = "item";
 
-      div.innerHTML = `
+      item.innerHTML = `
         <div class="itemTop">
-          <div>
+          <div class="left">
             <span class="rank">#${r.rank}</span>
             <span class="time">${r.start_time}</span>
           </div>
-          <div class="score">score ${Number(r.score).toFixed(4)}</div>
+
+          <div class="right">
+            <span class="score">score ${Number(r.score).toFixed(4)}</span>
+            <button class="toggleBtn" type="button" aria-label="설명 펼치기/접기" title="설명 펼치기/접기">
+              &#9654;
+            </button>
+          </div>
         </div>
-        <div class="title">${(r.title || "").slice(0, 90)}</div>
+
+        <div class="title">${r.title || ""}</div>
       `;
 
-      div.addEventListener("click", () => {
+      // 아이템(박스) 클릭: 이동 + 재생
+      item.addEventListener("click", () => {
         setActive(idx);
-        // ✅ start_time만 사용해서 점프 후 계속 재생
         if (typeof player.fastSeek === "function") player.fastSeek(r.start_sec);
         else player.currentTime = r.start_sec;
         player.play();
       });
 
-      resultsEl.appendChild(div);
+      // 세모 버튼 클릭: 설명 토글만 (이동/재생 이벤트 막기)
+      const toggleBtn = item.querySelector(".toggleBtn");
+      toggleBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleExpanded(item);
+      });
+
+      resultsEl.appendChild(item);
     });
 
   } catch (e) {

@@ -68,25 +68,35 @@ video {
   border: 1px solid var(--border);
   background: var(--card);
   color: var(--text);
-  font-size: 15px;
+  font-sizea-size: 15px;
   cursor: pointer;
 }
 
 .searchbar button:hover { border-color: rgba(255,255,255,0.18); }
 
+/* side 자체는 스크롤 금지 + flex column */
 .side {
   border-left: 1px solid var(--border);
   background: #0f0f11;
   padding: 14px;
-  overflow: auto;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+  min-height: 0;
 }
 
+/* sticky 제거(겹침 방지) */
 .sideHeader {
-  position: sticky;
-  top: 0;
+  flex: 0 0 auto;
+  position: relative;
+  top: auto;
+  z-index: 1;
+
   background: #0f0f11;
   padding-bottom: 10px;
-  z-index: 10;
+  border-bottom: 1px solid var(--border);
 }
 
 .sideTitle {
@@ -100,11 +110,25 @@ video {
   color: var(--muted);
 }
 
+/* results만 스크롤 + 스크롤바 폭 고정 */
 .results {
+  flex: 1 1 auto;
+  min-height: 0;
+
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 10px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scrollbar-gutter: stable;
+}
+
+/* scrollbar-gutter 미지원 브라우저 fallback */
+@supports not (scrollbar-gutter: stable) {
+  .results { overflow-y: scroll; }
 }
 
 .item {

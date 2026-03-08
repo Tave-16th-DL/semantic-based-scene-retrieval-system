@@ -1,5 +1,10 @@
 # semantic-based-scene-retrieval-system
 
+</br>
+
+> 🎬 [Project demo video](https://drive.google.com/file/d/1ukLzR8UBfA_iDarDlwj1q1T20_8fLcv_/view?usp=sharing) !
+
+</br>
 
 <img width="1920" height="1080" alt="1" src="https://github.com/user-attachments/assets/bc93feb8-2c77-4a3f-b6e7-eb12f0564d28" />
 <img width="1920" height="1080" alt="2" src="https://github.com/user-attachments/assets/5f50c0e3-47cf-4beb-a14c-4254de601be6" />
